@@ -3,6 +3,8 @@
 
 #include <balboa.h>
 
+#define BALBOA_DEFAULT_PORT "/tmp/balboa-sock"
+
 struct balboa {
     const char *last_err;
     int daemon_fd;

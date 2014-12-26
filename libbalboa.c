@@ -92,6 +92,9 @@ balboa *balboa_open(const char *port)
         return 0;
     }
 
+    if (!port) {
+        port = BALBOA_DEFAULT_PORT;
+    }
     if (port[0] == '/') {
         p = strdup(port);
     } else {
