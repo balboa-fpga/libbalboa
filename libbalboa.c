@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include <errno.h>
 
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/uio.h>
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -40,12 +42,13 @@ static int daemon_recv(int fd, char *buf, size_t buflen)
 {
     int ret;
 
-    ret = read(fd, buf, buflen);
+    ret = read(fd, buf, buflen - 1);
     if (ret < 1) {
-        snprintf(errbuf, sizeof(errbuf), "read from daemon socket: %s\n",
-                strerror(errno));
+        snprintf(errbuf, sizeof(errbuf), "read from daemon socket: %s",
+                ret == 0 ? "EOF" : strerror(errno));
         return 0;
     }
+    buf[ret] = '\0';
     return 1;
 }
 
@@ -54,6 +57,8 @@ static int get_socket(const char *port)
     int fd, ret;
     char buf[100];
     int bufsz = sizeof(buf);
+    struct sockaddr_un sa;
+    int socklen;
 
     fd = socket(AF_LOCAL, SOCK_STREAM, 0);
     if (fd == -1) {
@@ -61,7 +66,12 @@ static int get_socket(const char *port)
         return -1;
     }
 
-    ret = connect(fd, (struct sockaddr *)port, strlen(port));
+    memset(&sa, 0, sizeof(sa));
+    sa.sun_family = AF_UNIX;
+    strcpy(sa.sun_path, port);
+    socklen = offsetof(struct sockaddr_un, sun_path) + strlen(port) + 1;
+
+    ret = connect(fd, (struct sockaddr *)&sa, socklen);
     if (ret == -1) {
         snprintf(errbuf, sizeof(errbuf), "connect: %s\n", strerror(errno));
         goto fail;
