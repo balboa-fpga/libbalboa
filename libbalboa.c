@@ -31,7 +31,7 @@ static int daemon_send(int fd, char *cmd)
 
     ret = writev(fd, iov, 2);
     if (ret != n) {
-        snprintf(errbuf, sizeof(errbuf), "writev to daemon socket: %s\n",
+        snprintf(errbuf, sizeof(errbuf), "writev to daemon socket: %s",
                 strerror(errno));
         return 0;
     }
@@ -62,7 +62,7 @@ static int get_socket(const char *port)
 
     fd = socket(AF_LOCAL, SOCK_STREAM, 0);
     if (fd == -1) {
-        snprintf(errbuf, sizeof(errbuf), "socket: %s\n", strerror(errno));
+        snprintf(errbuf, sizeof(errbuf), "socket: %s", strerror(errno));
         return -1;
     }
 
@@ -73,7 +73,7 @@ static int get_socket(const char *port)
 
     ret = connect(fd, (struct sockaddr *)&sa, socklen);
     if (ret == -1) {
-        snprintf(errbuf, sizeof(errbuf), "connect: %s\n", strerror(errno));
+        snprintf(errbuf, sizeof(errbuf), "connect: %s", strerror(errno));
         goto fail;
     }
     ret = daemon_send(fd, "hi");
@@ -82,8 +82,8 @@ static int get_socket(const char *port)
     ret = daemon_recv(fd, buf, bufsz);
     if (ret == 0)
         goto fail;
-    if (!strcmp(buf, "ok\n")) {
-        snprintf(errbuf, sizeof(errbuf), "protocol error, got '%s'\n", buf);
+    if (strcmp(buf, "ok\n")) {
+        snprintf(errbuf, sizeof(errbuf), "protocol error, got '%s'", buf);
         goto fail;
     }
     return fd;
@@ -98,7 +98,7 @@ balboa *balboa_open(const char *port)
     char *p = 0;
 
     if (!b) {
-        snprintf(errbuf, sizeof(errbuf), "calloc(%d) failed\n",
+        snprintf(errbuf, sizeof(errbuf), "calloc(%d) failed",
                 (int)(sizeof *b));
         return 0;
     }
@@ -114,7 +114,7 @@ balboa *balboa_open(const char *port)
 
         p = malloc(n);
         if (!p) {
-            snprintf(errbuf, sizeof(errbuf), "malloc(%d) failed\n", n);
+            snprintf(errbuf, sizeof(errbuf), "malloc(%d) failed", n);
             goto fail;
         }
         snprintf(p, n, "%s%s", base, port);
@@ -159,7 +159,7 @@ balboa_core *balboa_get_core(balboa *b, const char *corename)
     ret = sscanf(buf, "ok core %1023s mem 0x%llx size 0x%llx",
             name, &window, &size);
     if (ret != 3) {
-        snprintf(errbuf, sizeof errbuf, "Bad response to 'core': '%s'\n", buf);
+        snprintf(errbuf, sizeof errbuf, "Bad response to 'core': '%s'", buf);
         return 0;
     }
     c->window = window;
@@ -177,13 +177,13 @@ void *balboa_core_get_win(balboa_core *c, int n)
 
     fd = open("/dev/mem", O_RDWR);
 
-    if (!fd) {
-        snprintf(errbuf, sizeof errbuf, "/dev/mem: %s\n", strerror(errno));
-        return 0;
+    if (fd == -1) {
+        snprintf(errbuf, sizeof errbuf, "/dev/mem: %s", strerror(errno));
+        goto fail;
     }
     p = mmap(0, c->mem_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, c->window);
     if (p == MAP_FAILED) {
-        snprintf(errbuf, sizeof errbuf, "mmap(0x%llx, 0x%llx): %s\n",
+        snprintf(errbuf, sizeof errbuf, "mmap(0x%llx, 0x%llx): %s",
                 (long long)c->mem_size, c->window, strerror(errno));
         goto fail;
     }
