@@ -132,7 +132,7 @@ fail:
 
 const char *balboa_last_error(balboa *b)
 {
-    if (b)
+    if (b && b->last_err)
         return b->last_err;
     return errbuf;
 }
