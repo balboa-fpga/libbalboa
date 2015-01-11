@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
+#include <balboa.h>
 #include <balboa-int.h>
 
 // XXX use thread local storage?

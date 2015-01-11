@@ -1,8 +1,6 @@
 #ifndef BALBOA_INT_H_
 #define BALBOA_INT_H_
 
-#include <balboa.h>
-
 #define BALBOA_DEFAULT_PORT "/tmp/balboa-sock"
 
 struct balboa {
