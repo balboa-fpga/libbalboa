@@ -10,7 +10,8 @@ struct balboa {
 
 struct balboa_core {
     void *mem;          // virtual address mapped in this proc
-    long long window;   // physical address in /dev/mem
+    const char *devpath; // path to device file for mmap (normally /dev/mem)
+    long long window;   // physical address in devpath
     size_t mem_size;
 };
 

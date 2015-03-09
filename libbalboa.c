@@ -155,7 +155,7 @@ balboa_core *balboa_get_core(balboa *b, const char *corename)
     int ret;
     long long window, size;
     balboa_core *c = calloc(sizeof *c, 1);
-    char name[1024];
+    char name[1024], devpath[1024];
 
     if (!c) {
         snprintf(errbuf, sizeof errbuf, "calloc failed");
@@ -168,12 +168,13 @@ balboa_core *balboa_get_core(balboa *b, const char *corename)
     ret = daemon_recv(b->daemon_fd, buf, sizeof buf);
     if (ret == 0)
         return 0;
-    ret = sscanf(buf, "ok core %1023s mem 0x%llx size 0x%llx",
-            name, &window, &size);
-    if (ret != 3) {
+    ret = sscanf(buf, "ok core %1023s mem %1023s 0x%llx size 0x%llx",
+            name, devpath, &window, &size);
+    if (ret != 4) {
         snprintf(errbuf, sizeof errbuf, "Bad response to 'core': '%s'", buf);
         return 0;
     }
+    c->devpath = strdup(devpath);
     c->window = window;
     c->mem_size = size;
     return c;
@@ -187,10 +188,10 @@ void *balboa_core_get_win(balboa_core *c, int n)
     if (c->mem)
         return c->mem;
 
-    fd = open("/dev/mem", O_RDWR);
+    fd = open(c->devpath, O_RDWR);
 
     if (fd == -1) {
-        snprintf(errbuf, sizeof errbuf, "/dev/mem: %s", strerror(errno));
+        snprintf(errbuf, sizeof errbuf, "%s: %s", c->devpath, strerror(errno));
         goto fail;
     }
     p = mmap(0, c->mem_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, c->window);
